@@ -14,7 +14,7 @@ func readFile(path string) ([]byte, error) {
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil, nil
 	}
-	return bs, nil
+	return bs, err
 }
 
 func repoPath(repo, file string) string {

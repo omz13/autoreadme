@@ -1,0 +1,33 @@
+autoreadme — fork notice
+=========================
+
+This is a fork of github.com/jimmyfrasche/autoreadme.
+
+Fork point: commit aacd7e11c8ba0b1f62709fd5d195d2cc48d90af4 (2024-05-04).
+Upstream license (BSD-2-Clause, "Copyright (c) 2013, JImmyFrasche") is
+retained verbatim in LICENSE and continues to apply to the inherited code.
+
+Why the fork: upstream is unmaintained and we hit a real bug (below) with no
+prospect of an upstream fix. The tool is small and build-time only, so we own
+it rather than depend on a dead repo.
+
+Module path / hosting
+---------------------
+Published under the vanity import path omz13.com/go/autoreadme. Source is
+hosted at github.com/omz13/autoreadme; the vanity path carries the go-import
+redirect. The original github.com/jimmyfrasche/autoreadme import path is no
+longer used by our tree.
+
+Changes from the fork point
+---------------------------
+- project.go, PairPackagesWithXTests: the merged *info was stored under
+  pkg.PkgPath but looked up under the _test-stripped path. With go/packages
+  returning an external test package (package foo_test) before its in-package
+  sibling, the lookup missed and produced a phantom info with pkg == nil.
+  CollectProjectErrors then flagged that as "only has external test files"
+  and aborted the WHOLE run, writing zero READMEs — silently and
+  nondeterministically, depending on load order. Now keyed under the stripped
+  path so the pair merges regardless of order.
+- go.mod: module renamed to omz13.com/go/autoreadme; golang.org/x/tools,
+  x/mod and x/sync bumped so the tool builds under the current Go toolchain
+  (the pinned x/tools no longer compiled).

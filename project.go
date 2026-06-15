@@ -58,7 +58,13 @@ func PairPackagesWithXTests(in []*packages.Package) map[string]*info {
 		} else {
 			p.test = pkg
 		}
-		m[pkg.PkgPath] = p
+		// Fork fix (see NOTICE): key under the _test-stripped path, not
+		// pkg.PkgPath. Otherwise, when go/packages hands back an external test
+		// package (foo_test) before its in-package sibling, the merge above
+		// misses, this leaves a phantom info with pkg == nil, and
+		// CollectProjectErrors aborts the entire run ("only has external test
+		// files") writing zero READMEs. Order-dependent and silent.
+		m[path] = p
 	}
 	return m
 }
