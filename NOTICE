@@ -31,3 +31,13 @@ Changes from the fork point
 - go.mod: module renamed to omz13.com/go/autoreadme; golang.org/x/tools,
   x/mod and x/sync bumped so the tool builds under the current Go toolchain
   (the pinned x/tools no longer compiled).
+- default.template: generated footers now link to
+  https://pkg.go.dev/omz13.com/go/autoreadme, the human-readable docs page for
+  the vanity import path.
+- files.go: readFile now returns unexpected os.ReadFile errors instead of
+  silently treating them as empty content. Missing files are still optional.
+- autoreadme.go: added -check for CI drift detection (dry run, non-zero when
+  any README.md is stale) and -v for stable reporting of skipped, unchanged and
+  written files. Changed output paths are sorted so logs are deterministic.
+- tests: added focused coverage for the external-test-package pairing bug and
+  readFile error propagation.
