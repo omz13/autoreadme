@@ -10,10 +10,14 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"slices"
+	"strings"
 )
 
 var PrintTemplate = flag.Bool("print-template", false, "write the built in template to stdout and exit")
 var Version = flag.Bool("version", false, "output version information")
+var Check = flag.Bool("check", false, "report README.md files that are out of date and exit non-zero without writing anything")
+var Verbose = flag.Bool("v", false, "report every package as written, unchanged, or skipped")
 
 func main() {
 	log.SetFlags(0)
@@ -100,6 +104,9 @@ func Main(ctx context.Context) error {
 	pairs := PairPackagesWithXTests(packages)
 	// filter out any ignored packages
 	for k := range ignore {
+		if _, ok := pairs[k]; ok && *Verbose {
+			log.Printf("skipped (ignored): %s", k)
+		}
 		delete(pairs, k)
 	}
 
@@ -155,16 +162,43 @@ func Main(ctx context.Context) error {
 		}
 
 		contents := buf.Bytes()
+		path := filepath.Join(info.dir, "README.md")
 		// we only queue the write if there's been a change to the contents
 		if !bytes.Equal(contents, info.oldReadme) {
 			files = append(files, file{
-				path:     filepath.Join(info.dir, "README.md"),
+				path:     path,
 				contents: bytes.Clone(contents),
 			})
+		} else if *Verbose {
+			log.Printf("unchanged: %s", path)
 		}
 	}
 
+	// pairs is a map, so the queue order is nondeterministic; sort it so -check
+	// and -v output is stable across runs (CI logs, diffs).
+	slices.SortFunc(files, func(a, b file) int {
+		return strings.Compare(a.path, b.path)
+	})
+
+	// -check is a dry run: report what's stale, write nothing, exit non-zero if
+	// anything is out of date. The CI guard against a forgotten go:generate.
+	if *Check {
+		for _, file := range files {
+			log.Printf("out of date: %s", file.path)
+		}
+		if len(files) > 0 {
+			return fmt.Errorf("%d README.md file(s) out of date; run go generate", len(files))
+		}
+		if *Verbose {
+			log.Printf("all README.md files up to date")
+		}
+		return nil
+	}
+
 	for _, file := range files {
+		if *Verbose {
+			log.Printf("writing: %s", file.path)
+		}
 		if err := os.WriteFile(file.path, file.contents, 0666); err != nil {
 			return err
 		}
