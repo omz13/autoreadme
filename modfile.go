@@ -39,11 +39,7 @@ func ModInfo(projectRoot string) (*Module, error) {
 		GoVersion = f.Go.Version
 	}
 
-	// BUG(jmf): Currently this is not set by ParseLax, see https://github.com/golang/go/issues/67132
-	Toolchain := ""
-	if f.Toolchain != nil {
-		Toolchain = f.Toolchain.Name
-	}
+	Toolchain := moduleToolchain(f, bs)
 
 	comments := f.Module.Syntax.Comments.Before
 	text := stripDeprecation(flattenModComments(comments))
@@ -72,4 +68,24 @@ var deprecatedRE = regexp.MustCompile(`(?ms)((^[ \t]*|\n\n)Deprecated: *(.*?)($|
 
 func stripDeprecation(text string) string {
 	return deprecatedRE.ReplaceAllString(text, "\n")
+}
+
+// moduleToolchain returns the toolchain directive from go.mod. ParseLax omits
+// it even though the statement is known (golang/go#67132), so fall back to a
+// line scan of the file we already read.
+func moduleToolchain(f *modfile.File, src []byte) string {
+	if f.Toolchain != nil {
+		return f.Toolchain.Name
+	}
+	return modfileToolchainFromSource(src)
+}
+
+var toolchainLineRE = regexp.MustCompile(`(?m)^[ \t]*toolchain[ \t]+(\S+)`)
+
+func modfileToolchainFromSource(src []byte) string {
+	m := toolchainLineRE.FindSubmatch(src)
+	if len(m) < 2 {
+		return ""
+	}
+	return string(m[1])
 }

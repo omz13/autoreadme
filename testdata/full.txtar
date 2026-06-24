@@ -49,7 +49,7 @@ middle
 -GOVERSION
 1.21.0
 -TOOLCHAIN
-
+go1.22
 -DOCUMENTATION
 Ax.
 ~
