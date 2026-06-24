@@ -2,6 +2,17 @@
 
 Automatically generate a github README.md for each package in your Go module.
 
+## Fork
+
+This module is a fork of github.com/jimmyfrasche/autoreadme. Upstream is unmaintained; we publish omz13.com/go/autoreadme and fixed a few things that bit us in production README generation:
+
+  - external test package pairing (phantom packages that aborted whole runs)
+  - CI -check mode and stable -v logging
+  - toolchain directive read from go.mod when ParseLax drops it (golang/go#67132)
+  - readFile error propagation, default template footer URL, dependency bumps
+
+Fork point and full change list: see NOTICE in the repository.
+
 ## Examples
 
 Create a README.md for each package in the current module (Warning: this will overwrite any existing README.md files!)

@@ -41,3 +41,5 @@ Changes from the fork point
   written files. Changed output paths are sorted so logs are deterministic.
 - tests: added focused coverage for the external-test-package pairing bug and
   readFile error propagation.
+- modfile.go: read toolchain from go.mod source when ParseLax omits it
+  (golang/go#67132); removes the stale BUG note from pkg.go.dev.
